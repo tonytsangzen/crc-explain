@@ -9,7 +9,7 @@
 #define CRC_POLY  0x5   //x4+x2+1
 #define CRC_LEN   5     
 #define CRC_INIT  0x1f 
-#define DATA_LEN  11    // 7bit address  +  4 bit endpoint  MSB first
+#define DATA_LEN  11    // 7bit address  +  4 bit endpoint  LSB first
 
 /*
  *  Help function:
@@ -71,16 +71,15 @@ void type(char c, int len){
  *  line 4: data register shift right, crc register shift left
  *  line 6: output register
  */
-void step_show(uint32_t crc_reg, uint32_t crc_poly, uint32_t input){
-  static int step = 0;
-  int xor=bit_xor(crc_reg, 4, input, 0);
-
+void step_show(uint32_t crc_reg, uint32_t crc_poly, uint32_t input, int step, char* explain, int xor){
+  //clean screen
   printf("\033[2J");
   printf("%c[%d;%dH",27, 0, 0);
   //line 1
-  type('-', (DATA_LEN + CRC_LEN + 16)/2);
-  printf("step %2d",step);
-  type('-', (DATA_LEN + CRC_LEN + 16)/2);
+  int dash_num = (DATA_LEN + CRC_LEN + 15) / 2;
+  type('-', dash_num);
+  printf("step %02d", step);
+  type('-', dash_num);
   printf("\n");
 
   //line 2
@@ -118,7 +117,10 @@ void step_show(uint32_t crc_reg, uint32_t crc_poly, uint32_t input){
   printf("<==this is output  \n");
 
   //line 7 end line
-  type('-', DATA_LEN + CRC_LEN + 22);
+  dash_num = (DATA_LEN + CRC_LEN + 16 - strlen(explain)) / 2;
+  type('-', dash_num);
+  printf("next:%s", explain);
+  type('-', dash_num);
   printf("\n");
 
   step++;
@@ -132,6 +134,7 @@ int main(int argc, char* argv[])
 {
   uint32_t addr = 0x70;
   uint32_t ep = 0x4;
+  int i;
 
   //initialize crc reg
   uint32_t crc_reg = CRC_INIT;
@@ -145,19 +148,23 @@ int main(int argc, char* argv[])
   uint32_t input = ep << 7 | addr;
 
 
-  for(int i = 0; i < DATA_LEN; i++){
+  for(i = 0; i < DATA_LEN; i++){
       //show this step start status 
-      step_show(crc_reg, crc_poly, input);
 
       //data lsb xor crc msb 
       if(bit_xor(crc_reg, (CRC_LEN - 1), input, 0)){
-        crc_reg = (crc_reg << 1) ^ crc_poly;
+        step_show(crc_reg, crc_poly, input, i, "right shift crc reg", 0);
+        crc_reg <<= 1;
+        step_show(crc_reg, crc_poly, input, i, "need xor poly", 1);
+        crc_reg ^= crc_poly;
       }else{
+        step_show(crc_reg, crc_poly, input, i, "right shift crc reg", 0);
         crc_reg <<= 1;
       }
 
+      step_show(crc_reg, crc_poly, input, i, "left shift input reg", 0);
       input >>= 1;
   }
   //show the result
-  step_show(crc_reg, crc_poly, input);
+  step_show(crc_reg, crc_poly, input, i, "finish", 0);
 }
