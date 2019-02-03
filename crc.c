@@ -80,7 +80,7 @@ void step_show(uint32_t crc_reg, uint32_t crc_poly, uint32_t input, int step, ch
   type('-', dash_num);
   printf("step %02d", step);
   type('-', dash_num);
-  printf("\n");
+  printf("\n\n");
 
   //line 2
   type(' ',  DATA_LEN+2);
@@ -114,7 +114,7 @@ void step_show(uint32_t crc_reg, uint32_t crc_poly, uint32_t input, int step, ch
   //line 6 result
   type(' ', DATA_LEN + 2);
   dump(~crc_reg, CRC_LEN, 0, 39, 47);
-  printf("<==this is output  \n");
+  printf("<==this is checksum\n\n");
 
   //line 7 end line
   dash_num = (DATA_LEN + CRC_LEN + 16 - strlen(explain)) / 2;
@@ -132,8 +132,8 @@ void step_show(uint32_t crc_reg, uint32_t crc_poly, uint32_t input, int step, ch
  */
 int main(int argc, char* argv[])
 {
-  uint32_t addr = 0x70;
-  uint32_t ep = 0x4;
+  uint32_t addr = 0x15;
+  uint32_t ep = 0xe;
   int i;
 
   //initialize crc reg
